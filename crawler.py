@@ -7,15 +7,17 @@ MAX_DEPTH = 10
 def extract_links(frontier:list) -> list:
     urls = [] 
     depth = 0
+    session = requests.Session()
     while depth < MAX_DEPTH and frontier:
         try: 
             url = frontier.pop(0)
-            response = requests.get(url)
+            response = session.get(url)
             if response.status_code != 200:
                 raise Exception("Invalid response")
             html_doc = response.text
             soup = BeautifulSoup(html_doc, 'html.parser')
             link_elements = soup.select("a[href]") 
+            link_elements = set(link_elements) #remove duplicates
             #we only extract the a html tags that have a reference attribute 
             #example: <a href="">
 
@@ -44,8 +46,8 @@ def absolute_url(target_url, url):
         url = requests.compat.urljoin(target_url, url) 
     return url
 
-def process_html(url):
-    response = requests.get(url)
+def process_html(session, url):
+    response = session.get(url)
     if response.status_code != 200:
         return
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -55,5 +57,6 @@ def process_html(url):
     return text
 
 if __name__ == "__main__":
-    print(process_html(html_doc))
+    s = requests.Session() #reuse a session object
+    print(process_html(s, html_doc))
     
