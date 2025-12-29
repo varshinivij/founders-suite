@@ -24,22 +24,36 @@ def extract_links(frontier:list) -> list:
             for link_el in link_elements:
                 raw_url = link_el["href"]
                 abs_url = absolute_url(url, raw_url)
+
                 frontier.append(abs_url)
                 urls.add(abs_url)
+
+                print("CONTENT IS", process_html(abs_url))
             
             depth += 1
             
         except Exception as e:
             print(f"Error: {e}")
+            return
     
     return urls
 
 #Convert a raw url to an absolute url
 def absolute_url(target_url, url):
     if not url.startswith("http"):
-        url = requests.compat.urljoin(target_url, url)
+        url = requests.compat.urljoin(target_url, url) 
     return url
 
+def process_html(url):
+    response = requests.get(url)
+    if response.status_code != 200:
+        return
+    soup = BeautifulSoup(response.text, 'html.parser')
+    for tag in soup.find_all(['script', 'style', 'span', 'div']):
+        tag.decompose()
+    text = soup.get_text(strip=True, separator=' ')
+    return text
+
 if __name__ == "__main__":
-    print(extract_links(["https://books.toscrape.com/"]))
+    print(process_html(html_doc))
     
