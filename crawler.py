@@ -1,5 +1,6 @@
 import requests 
 from bs4 import BeautifulSoup
+import threading
 
 MAX_DEPTH = 10 
 
