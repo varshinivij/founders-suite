@@ -1,8 +1,40 @@
 import { Type } from '@google/genai';
 
 export const playbookSchema = {
-  type: Type.OBJECT,
   properties: {
+    person: {
+      type: Type.STRING,
+      description: "Name of the famous person whose perspective and style should be used."
+    },
+
+    personality: {
+      type: Type.OBJECT,
+      required: [
+        "communicationStyle",
+        "thinkingStyle",
+        "feedbackStyle",
+        "biases"
+      ],
+      properties: {
+        communicationStyle: {
+          type: Type.STRING,
+          description: "How this person speaks (e.g. blunt, visionary, analytical, calm)."
+        },
+        thinkingStyle: {
+          type: Type.STRING,
+          description: "How this person reasons (e.g. first-principles, customer-first, systems-thinking)."
+        },
+        feedbackStyle: {
+          type: Type.STRING,
+          description: "How feedback is delivered (e.g. challenging, probing, supportive, skeptical)."
+        },
+        biases: {
+          type: Type.ARRAY,
+          items: { type: Type.STRING },
+          description: "Strong preferences or beliefs this person typically holds."
+        }
+      }
+    },
     ideaCore: {
       type: Type.OBJECT,
       required: ["businessName", "oneLiner", "problemStatement"],
@@ -84,5 +116,5 @@ export const playbookSchema = {
       }
     }
   },
-  required: ["ideaCore", "targetMarket", "valueDifferentiation", "solution", "system","additionalNotes"]
+  required: ["ideaCore", "targetMarket", "valueDifferentiation", "solution", "system","additionalNotes", "person", "personality"]
 };
