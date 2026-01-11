@@ -10,5 +10,7 @@ export const responseSchema = {
     },
     bluePrintState: playbookSchema,
   },
-  required: ["assistantMessage"]
+  required: ["assistantMessage","bluePrintState"]
 };
+
+console.log("Response Schema:", responseSchema);

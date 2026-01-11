@@ -9,6 +9,10 @@ import {
   Paper,
   Typography,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import SendIcon from '@mui/icons-material/Send';
@@ -16,10 +20,13 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { GoogleGenAI } from '@google/genai';
 import { Prompts } from './prompts';
 import { responseSchema } from './responseSchema';
+import { personalities } from './personalities';
 function Chat({ open, onClose }) {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedPersonality, setSelectedPersonality] = useState('');
+  const [personalityLocked, setPersonalityLocked] = useState(false);
   const chatRef = useRef(null);
   const messagesEndRef = useRef(null);
 
@@ -48,9 +55,22 @@ function Chat({ open, onClose }) {
       setMessages(prev => [...prev, { text: { assistantMessage: userMessage }, sender: 'user' }]);
       setInputValue('');
       setIsLoading(true);
+      
+      // Lock personality after first message
+      if (!personalityLocked) {
+        setPersonalityLocked(true);
+      }
 
       try {
-        const response = await chatRef.current.sendMessage({ message: userMessage+"\n\nCurrent Playbook State:\n"+JSON.stringify(messages[messages.length-1]?.text.bluePrintState || {}, null, 2) });
+        const mesSend = messages[messages.length-1];
+        const selectedPersonalityObj = personalities.find(p => p.person === selectedPersonality);
+        let toSend;
+        if (!mesSend) {
+          toSend = { message: userMessage+"\n\nCurrent Playbook State:\n"+JSON.stringify(selectedPersonalityObj, null, 2) };
+        } else {
+          toSend = { message: userMessage+"\n\nCurrent Playbook State:\n"+JSON.stringify(mesSend)};
+        }
+        const response = await chatRef.current.sendMessage(toSend);
         const text = JSON.parse(response.text);
         console.log(text.bluePrintState);
         setMessages(prev => [...prev, { text: text, sender: 'model' }]);
@@ -65,6 +85,12 @@ function Chat({ open, onClose }) {
       }
     }
   };
+  
+  const handlePersonalityChange = (e) => {
+    if (!personalityLocked) {
+      setSelectedPersonality(e.target.value);
+    }
+  };
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -75,6 +101,8 @@ function Chat({ open, onClose }) {
 
   const clearChat = () => {
     setMessages([]);
+    setPersonalityLocked(false);
+    setSelectedPersonality('');
   };
 
   return (
@@ -90,7 +118,7 @@ function Chat({ open, onClose }) {
           bottom: 80,
           right: 16,
           m: 0,
-          maxHeight: '500px',
+          maxHeight: '700px',
         },
       }}
     >
@@ -112,8 +140,8 @@ function Chat({ open, onClose }) {
             flexGrow: 1,
             p: 2,
             overflowY: 'auto',
-            minHeight: '300px',
-            maxHeight: '300px',
+            minHeight: '450px',
+            maxHeight: '450px',
           }}
         >
           {messages.length === 0 ? (
@@ -157,20 +185,48 @@ function Chat({ open, onClose }) {
         </Box>
         
         {/* Input Area */}
-        <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider', display: 'flex', gap: 1 }}>
-          <TextField
-            fullWidth
-            size="small"
-            placeholder="Type a message..."
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            variant="outlined"
-            disabled={isLoading}
-          />
-          <IconButton color="primary" onClick={handleSendMessage} disabled={isLoading}>
-            <SendIcon />
-          </IconButton>
+        <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+          <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+            <FormControl size="small" sx={{ minWidth: 140 }} disabled={personalityLocked}>
+              <InputLabel>Personality</InputLabel>
+              <Select
+                value={selectedPersonality}
+                label="Personality"
+                onChange={handlePersonalityChange}
+              >
+                <MenuItem value="">
+                  <em>Select</em>
+                </MenuItem>
+                {personalities.map(p => (
+                  <MenuItem key={p.person} value={p.person}>
+                    {p.person}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            {personalityLocked && (
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Typography variant="caption" color="text.secondary">
+                  ✓ {selectedPersonality}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder={selectedPersonality ? "Type a message..." : "Select a personality first..."}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyPress={handleKeyPress}
+              variant="outlined"
+              disabled={isLoading || !selectedPersonality}
+            />
+            <IconButton color="primary" onClick={handleSendMessage} disabled={isLoading || !selectedPersonality}>
+              <SendIcon />
+            </IconButton>
+          </Box>
         </Box>
       </DialogContent>
     </Dialog>
