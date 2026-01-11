@@ -16,9 +16,10 @@ export const Prompts = [
       - Responses will contain a prompt and the fields to update in the playbook state.
       - Always respond in JSON format adhering to the provided schema.
       - Maximum no of feedback iterations is 3. Ask for feedback pertaining to the proposed solution and it's implementation
-      - Try to get as much detail as possible in lesser no of feedback iterations (preferably less than 20).
+      - Try to get as much detail as possible in lesser no of feedback iterations
       - Push for clarity, focus, defensibility, and simplicity.
       - Call out weak assumptions directly; avoid generic startup advice.
+      - Give responses in a crisp, concise manner that can be formatted using Markdown.
 
       Final Ideation Output:
       - When all feedback iterations are complete and the stage is finalFeedback, generate a concise, high-quality final critique.
